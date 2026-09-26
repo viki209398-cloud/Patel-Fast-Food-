@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>મંગલેશ્વર બેકરી & પટેલ ફાસ્ટ ફૂડ - હિસાબ</title>
+    <style>
+        * { box-sizing: border-box; font-family: sans-serif; }
+        body { background: #f4f7f6; margin: 0; padding: 10px; color: #333; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #d9534f; margin-bottom: 5px; font-size: 20px; }
+        p.sub-title { text-align: center; color: #666; font-size: 13px; margin-top: 0; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+        button { width: 100%; padding: 12px; background: #5cb85c; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        button:hover { background: #4cae4c; }
+        .btn-excel { background: #0275d8; margin-top: 10px; }
+        .btn-excel:hover { background: #025aa5; }
+        .summary-box { display: flex; justify-content: space-between; margin-top: 15px; background: #eef2f3; padding: 10px; border-radius: 5px; font-size: 14px; font-weight: bold; }
+        table { width: 100%; margin-top: 15px; border-collapse: collapse; font-size: 13px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>મંગલેશ્વર બેકરી & પટેલ ફાસ્ટ ફૂડ</h2>
+    <p class="sub-title">દૈનિક વકરો અને ખર્ચ મેનેજમેન્ટ</p>
+
+    <div class="form-group">
+        <label>તારીખ:</label>
+        <input type="date" id="entryDate">
+    </div>
+
+    <div class="form-group">
+        <label>વ્યવહારનો પ્રકાર:</label>
+        <select id="entryType">
+            <option value="વકરો (Income)">વકરો (Income +)</option>
+            <option value="ખર્ચ (Expense)">ખર્ચ (Expense -)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>રકમ (₹):</label>
+        <input type="number" id="entryAmount" placeholder="રકમ દાખલ કરો">
+    </div>
+
+    <div class="form-group">
+        <label>વિગત / નોંધ:</label>
+        <input type="text" id="entryDesc" placeholder="દા.ત. ચા-નાસ્તો, રોકડા વકરો">
+    </div>
+
+    <button onclick="addEntry()">એન્ટ્રી સેવ કરો</button>
+    <button class="btn-excel" onclick="downloadExcel()">Excel ફાઇલ ડાઉનલોડ કરો</button>
+
+    <div class="summary-box">
+        <span>कुल वકરો: <span id="totalInc" style="color: green;">₹0</span></span>
+        <span>કુલ ખર્ચ: <span id="totalExp" style="color: red;">₹0</span></span>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>તારીખ</th>
+                    <th>પ્રકાર</th>
+                    <th>રકમ</th>
+                    <th>વિગત</th>
+                </tr>
+            </thead>
+            <p id="tableList"></p>
+            <tbody id="entryTableBody">
+                <!-- Data will show here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // આજની તારીખ સેટ કરવી
+    document.getElementById('entryDate').valueAsDate = new Date();
+
+    let entries = JSON.parse(localStorage.getItem('patel_entries')) || [];
+
+    function renderTable() {
+        let tbody = document.getElementById('entryTableBody');
+        tbody.innerHTML = '';
+        let totalInc = 0;
+        let totalExp = 0;
+
+        entries.forEach((item, index) => {
+            let row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.date}</td>
+                <td>${item.type}</td>
+                <td>₹${item.amount}</td>
+                <td>${item.desc}</td>
+            `;
+            tbody.appendChild(row);
+
+            if(item.type.includes('Income')) {
+                totalInc += parseFloat(item.amount);
+            } else {
+                totalExp += parseFloat(item.amount);
+            }
+        });
+
+        document.getElementById('totalInc').innerText = '₹' + totalInc;
+        document.getElementById('totalExp').innerText = '₹' + totalExp;
+    }
+
+    function addEntry() {
+        let date = document.getElementById('entryDate').value;
+        let type = document.getElementById('entryType').value;
+        let amount = document.getElementById('entryAmount').value;
+        let desc = document.getElementById('entryDesc').value;
+
+        if(!amount || !desc) {
+            alert('કૃપા કરીને રકમ અને વિગત બંને ભરો!');
+            return;
+        }
+
+        let newEntry = { date, type, amount, desc };
+        entries.push(newEntry);
+        localStorage.setItem('patel_entries', JSON.stringify(entries));
+
+        document.getElementById('entryAmount').value = '';
+        document.getElementById('entryDesc').value = '';
+        renderTable();
+    }
+
+    function downloadExcel() {
+        if(entries.length === 0) {
+            alert('ડાઉનલોડ કરવા માટે કોઈ ડેટા નથી!');
+            return;
+        }
+        let csv = 'Tarik,Prakar,Rakam,Vigat\n';
+        entries.forEach(e => {
+            csv += `"${e.date}","${e.type}","${e.amount}","${e.desc}"\n`;
+        });
+        let blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = 'Mangleshwar_Bakery_Hisab.csv';
+        a.click();
+    }
+
+    renderTable();
+</script>
+
+</body>
+</html>
